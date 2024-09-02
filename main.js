@@ -1,5 +1,11 @@
 import "./style.css";
 import Phaser from "phaser";
+// elements
+const playButton = document.getElementById("play");
+const pauseButton = document.getElementById("pause");
+const resumeButton = document.getElementById("resume");
+const replayButton = document.getElementById("replay");
+
 const sizes = {
   width: 500,
   height: 500,
@@ -31,7 +37,6 @@ class GameScene extends Phaser.Scene {
     this.load.image("money", "/assets/money.png");
   }
   create() {
-    this.scene.pause('game-pause')
     // background and coin music load
     this.bgMusic = this.sound.add("bgMusic");
     this.coinMusic = this.sound.add("coin");
@@ -92,7 +97,7 @@ class GameScene extends Phaser.Scene {
       scale: 0.04,
       duration: 100,
       emitting: false,
-      quantity:1
+      quantity: 1,
     });
     this.moneyEmitter.startFollow(
       this.basket,
@@ -102,8 +107,15 @@ class GameScene extends Phaser.Scene {
     );
     // setup cursor;
     this.cursor = this.input.keyboard.createCursorKeys();
+    // event listeners;
+    playButton.addEventListener("click", () => this.startGame());
+    pauseButton.addEventListener("click", () => this.pauseGame());
+    resumeButton.addEventListener("click", () => this.resumeGame());
+    replayButton.addEventListener("click", () => this.replayGame());
+    this.scene.pause();
   }
   update() {
+    if (this.isPaused) return;
     this.timeRemaining = this.timerEvent.getRemainingSeconds();
     this.timerText.setText(
       `Time: ${Math.round(this.timeRemaining).toString()}`
@@ -122,15 +134,34 @@ class GameScene extends Phaser.Scene {
     }
   }
   targetHit() {
-    this.moneyEmitter.start()
+    this.moneyEmitter.start();
     this.coinMusic.play();
     this.apple.setY(0);
     this.apple.setX(Math.random() * (sizes.width - this.apple.width));
     this.point++;
     this.scoreText.setText(`Score: ${this.point}`);
   }
-  gameOver(){
-    this.sys.game.destroy(true);
+  startGame() {
+    this.isPaused = false;
+    this.scene.resume();
+  }
+
+  pauseGame() {
+    this.isPaused = true;
+    this.scene.pause();
+  }
+
+  resumeGame() {
+    this.isPaused = false;
+    this.scene.resume();
+  }
+  replayGame() {
+    this.isPaused = false;
+    this.scene.restart();
+  }
+  gameOver() {
+    this.scene.stop();
+    // this.sys.game.destroy(true);
   }
 }
 const config = {
@@ -142,10 +173,9 @@ const config = {
     default: "arcade",
     arcade: {
       gravity: { y: gravitySpeed },
-      debug: true,
+      debug: false,
     },
   },
   scene: [GameScene],
 };
 const game = new Phaser.Game(config);
-console.log(game)
